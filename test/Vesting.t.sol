@@ -34,6 +34,7 @@ contract VestingTest is Test {
         vesting.createCategory(categoryId, rate, totalVestAmount);
         //admin register user for the vesting plan
         vesting.createVesting(user, categoryId);
+        assertEq(vesting.balanceOf(user, categoryId), 0);
     }
 
     
