@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console2} from "forge-std/Test.sol";
 import {Vesting} from "../src/Vesting.sol";
 
 contract VestingTest is Test {
@@ -35,6 +35,19 @@ contract VestingTest is Test {
         //admin register user for the vesting plan
         vesting.createVesting(user, categoryId);
         assertEq(vesting.balanceOf(user, categoryId), 0);
+    }
+
+    function test_vest_token() public {
+        vm.startPrank(admin);
+        vesting.createCategory(categoryId, rate, totalVestAmount);
+        //admin register user for the vesting plan
+        vesting.createVesting(user, categoryId);
+        vm.warp(block.timestamp + 1 days);
+        vm.startPrank(user);
+        uint256 vestedAmount =  vesting.getTotalVest(user, categoryId);
+        console2.log("vested amount: %s", vestedAmount);
+        vesting.vest(categoryId);
+        assertEq(vesting.balanceOf(user, categoryId), vestedAmount);
     }
 
     

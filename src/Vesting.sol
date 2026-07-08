@@ -40,6 +40,7 @@ contract Vesting is ERC1155 {
 
     
     error NotAdmin();
+    error NotRegisteredUser();
     error ProtocolPaused();
     error UserIsBanned();
     error UserIsPaused();
@@ -74,6 +75,7 @@ contract Vesting is ERC1155 {
         factory = _factory;
         admin = _admin;
         pause = Pause.Unpaused;
+        rateBps = 10000; // 100% in basis points (1 bps = 0.01%)
     }
 
     /**
@@ -83,7 +85,7 @@ contract Vesting is ERC1155 {
         if (category[_categoryId].isCreated) revert CategoryAlreadyExists();
 
         category[_categoryId] = CategoryData({
-            rate: _rate / rateBps, 
+            rate: _rate, 
             totalVestAmount: _totalVestAmount,
             firstTimestamp: block.timestamp,
             isCreated: true
@@ -166,17 +168,17 @@ contract Vesting is ERC1155 {
      * @notice Calculates real-time total active claimable token units generated at the current block height
      */
     function getTotalVest(address _user, uint8 _categoryId) public view returns (uint256) {
-        if (!category[_categoryId].isCreated) return 0;
+        if (!category[_categoryId].isCreated) revert CategoryDoesNotExist();
         
         UserData memory user = userData[_user][_categoryId];
-        if(!user.active) return 0;
+        if(!user.active) revert NotRegisteredUser();
 
         CategoryData memory plan = category[_categoryId];
 
         uint256 timeDelta = user.lastTimestamp == 0 ? block.timestamp - plan.firstTimestamp : user.lastTimestamp;        
         
         // Multiplied by total starting layout value allocations tracked on raw mapping slots
-        uint256 accrued = timeDelta * plan.rate * plan.totalVestAmount;
+        uint256 accrued = (timeDelta * plan.rate * plan.totalVestAmount) / rateBps;
         uint256 totalVested = user.vestSnapshot + accrued;//@audit we dont need the totalwithdrawn state
 
         return totalVested;
@@ -209,7 +211,7 @@ contract Vesting is ERC1155 {
         // Use the native safeTransfer ERC1155 processing route to pass underlying items
         // In production implementation contexts, this line typically calls an external asset interface contract.
         // For standard self-contained mechanics, we transfer the ERC1155 token asset weight down to the receiver wallet.
-        _safeTransferFrom(msg.sender, address(this), _categoryId, claimableAmount, "");
+        _mint(msg.sender, _categoryId, claimableAmount, "");
 
         emit TokensVested(msg.sender, _categoryId, claimableAmount);
     }
