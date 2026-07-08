@@ -11,7 +11,7 @@ contract VestingTest is Test {
     address public factory = address(0x2);
     address public user = address(0x3);
     uint8 public categoryId = 1;
-    uint256 public rate = 2;
+    uint256 public rate = 200;
     uint256 public totalVestAmount = 2 ether;
    
 
@@ -50,5 +50,41 @@ contract VestingTest is Test {
         assertEq(vesting.balanceOf(user, categoryId), vestedAmount);
     }
 
+    function test_pause_protocol() public {
+        vm.startPrank(admin);
+        vesting.createCategory(categoryId, rate, totalVestAmount);
+        //admin register user for the vesting plan
+        vesting.createVesting(user, categoryId);
+        vesting.toggleVesting();
+        vm.warp(block.timestamp + 1 days);
+        vm.startPrank(user);
+        vm.expectRevert();
+        vesting.vest(categoryId);
+        
+    }
+
+    function test_pause_user() public {
+        vm.startPrank(admin);
+        vesting.createCategory(categoryId, rate, totalVestAmount);
+        //admin register user for the vesting plan
+        vesting.createVesting(user, categoryId);
+        vesting.toggleUser(user, categoryId);
+        vm.warp(block.timestamp + 1 days);
+        vm.startPrank(user);
+        vm.expectRevert();
+        vesting.vest(categoryId);
+    }
+
+    function test_blacklist_user() public {
+        vm.startPrank(admin);
+        vesting.createCategory(categoryId, rate, totalVestAmount);
+        //admin register user for the vesting plan
+        vesting.createVesting(user, categoryId);
+        vesting.blacklistUser(user, categoryId);
+        vm.warp(block.timestamp + 1 days);
+        vm.startPrank(user);
+        vm.expectRevert();
+        vesting.vest(categoryId);
+    }
     
 }

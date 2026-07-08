@@ -117,7 +117,7 @@ contract Vesting is ERC1155 {
         });
 
         // Initialize mapping balances natively leveraging your standard ERC1155 engine properties
-        _mint(_user, _categoryId, 0, "");//@audit we are minting 0 at first
+        _mint(_user, _categoryId, 0, "");
 
         emit VestingCreated(_user, _categoryId, targetPlan.totalVestAmount);
     }
@@ -129,7 +129,7 @@ contract Vesting is ERC1155 {
         banUser[_user] = true;
         uint256 currentBalance = balanceOf(_user, _categoryId);
         
-        if (currentBalance > 0) {//@audit this should be emphasised on
+        if (currentBalance > 0) {
             _burn(_user, _categoryId, currentBalance);
         }
 
@@ -179,7 +179,7 @@ contract Vesting is ERC1155 {
         
         // Multiplied by total starting layout value allocations tracked on raw mapping slots
         uint256 accrued = (timeDelta * plan.rate * plan.totalVestAmount) / rateBps;
-        uint256 totalVested = user.vestSnapshot + accrued;//@audit we dont need the totalwithdrawn state
+        uint256 totalVested = user.vestSnapshot + accrued;
 
         return totalVested;
     }
@@ -189,6 +189,7 @@ contract Vesting is ERC1155 {
      */
     function vest(uint8 _categoryId) external whenNotPaused {
         if (banUser[msg.sender]) revert UserIsBanned();
+        if (pause == Pause.Paused) revert ProtocolPaused();
         if (userData[msg.sender][_categoryId].pause == Pause.Paused) revert UserIsPaused();
         if (!category[_categoryId].isCreated) revert CategoryDoesNotExist();
 
