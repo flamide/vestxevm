@@ -10,6 +10,7 @@ contract VestingTest is Test {
     address public admin = address(0x1);
     address public factory = address(0x2);
     address public user = address(0x3);
+    address public fakeUser = address(0x4);
     uint8 public categoryId = 1;
     uint256 public rate = 200;
     uint256 public totalVestAmount = 2 ether;
@@ -85,6 +86,19 @@ contract VestingTest is Test {
         vm.startPrank(user);
         vm.expectRevert();
         vesting.vest(categoryId);
+    }
+
+    function test_invalid_cant_vest() public {
+        vm.startPrank(admin);
+        vesting.createCategory(categoryId, rate, totalVestAmount);
+        //admin register user for vesting plan
+        vesting.createVesting(user, categoryId);
+        //invalid user tries to claim vest
+        vm.warp(block.timestamp + 1 days);
+        vm.startPrank(fakeUser);
+        vm.expectRevert();
+        vesting.vest(categoryId);
+
     }
     
 }
