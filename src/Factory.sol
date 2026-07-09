@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Vesting} from "./Vesting.sol";
 
-contract VestingFactory {
+contract Factory {
 
     //Owner of the factory contracts
     address public owner;
@@ -26,7 +26,7 @@ contract VestingFactory {
         owner = msg.sender;
     }
 
-    modifier OnlyOwner() {
+    modifier onlyOwner() {
         _onlyOwner();
         _;
     }
@@ -35,7 +35,7 @@ contract VestingFactory {
     /**
      * @notice Deploys a new Vesting contract and records the deployment tracking.
      */
-    function deployVesting(address _admin) external OnlyOwner returns (address) {
+    function deployVesting(address _admin) external onlyOwner returns (address) {
         // Increment the total counter
         totalVestingContracts++;
         uint256 currentId = totalVestingContracts;
